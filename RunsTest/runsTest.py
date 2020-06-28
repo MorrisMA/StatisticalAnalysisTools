@@ -12,14 +12,18 @@ def calcStatistic(data, avg):
     cur = str()     # current type of run
     n1 = int(0)     # number of runs of positive values
     n2 = int(0)     # number of runs of negative values
-    p = int(0)      # number positive values
-    n = int(0)      # number negative values
+    p = int(0)      # number values greater than avg
+    n = int(0)      # number values less than avg
     N = int(0)      # total number of samples
 
-    cur = '-' if data[0] < 0 else '+'
+    cur = '-' if data[0] < avg else '+'
 
     for i in data:
-        inp = '-' if i < avg else '+'
+        if i == avg:
+            continue
+        elif i < avg:
+            inp = '-'
+        else: inp = '+'
 
         if inp == '+':
             p += 1
@@ -73,7 +77,7 @@ if __name__ == '__main__':
             # trim the input data to the desired section
             inputData = inputData[start:end]
             # convert the input data to a numeric representation
-            intStr = input("Is data integer (Y) or floating point (other): ")
+            intStr = input("Is data integer (Y/y) or floating point (other): ")
             if intStr in ['Y', 'y']:
                 data = list(int(line) for line in inputData)
             else: data = list(float(line) for line in inputData)
@@ -86,12 +90,11 @@ if __name__ == '__main__':
             else:
                 median = 0.0 if medStr == '' else float(medStr)
 
-            sum = float(0)
             avg = float(0)
             
-            if median == 0:
-                for i in data: sum += i
-                avg = sum / len(data)
+            if medStr == '':
+                for i in data: avg += i
+                avg = avg / len(data)
             else: avg = median
 
             Z, R, Rbar, sr, p, n, n1, n2 = calcStatistic(data, avg)
