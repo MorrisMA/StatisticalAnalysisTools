@@ -12,18 +12,14 @@ def calcStatistic(data, avg):
     cur = str()     # current type of run
     n1 = int(0)     # number of runs of positive values
     n2 = int(0)     # number of runs of negative values
-    p = int(0)      # number values greater than avg
-    n = int(0)      # number values less than avg
+    p = int(0)      # number positive values
+    n = int(0)      # number negative values
     N = int(0)      # total number of samples
 
     cur = '-' if data[0] < avg else '+'
 
     for i in data:
-        if i == avg:
-            continue
-        elif i < avg:
-            inp = '-'
-        else: inp = '+'
+        inp = '-' if i < avg else '+'
 
         if inp == '+':
             p += 1
@@ -74,8 +70,8 @@ if __name__ == '__main__':
 
             print()
 
-            # trim the input data to the desired section
-            inputData = inputData[start:end]
+##            # trim the input data to the desired section
+##            inputData = inputData[start:end]
             # convert the input data to a numeric representation
             intStr = input("Is data integer (Y/y) or floating point (other): ")
             if intStr in ['Y', 'y']:
@@ -90,17 +86,60 @@ if __name__ == '__main__':
             else:
                 median = 0.0 if medStr == '' else float(medStr)
 
+            sum = float(0)
             avg = float(0)
             
             if medStr == '':
-                for i in data: avg += i
-                avg = avg / len(data)
+                for i in data: sum += i
+                avg = sum / len(data)
             else: avg = median
 
-            Z, R, Rbar, sr, p, n, n1, n2 = calcStatistic(data, avg)
+            Z, R, Rbar, sr, p, n, n1, n2 = calcStatistic(data[start:end], avg)
 
             print()
-            print(len(data), Z, R, Rbar, sr, avg, p, n, n1, n2)
+            print("%5d, %8.3f, %8.3f, %8.3f, %8.3f" % \
+                  (len(data), Z, R, Rbar, sr) )
+            print("%8.1f, %5d, %5d, %5d, %5d" % (avg, p, n, n1, n2) )
+            print()
+
+            segStr = input("Enter segment size (500 default): ")
+            segLen = 500 if segStr == '' else int(segStr)
+
+            numSeg = int(len(data) / segLen)
+            p1 = math.log(math.log(1/0.99))
+            p5 = math.log(math.log(1/0.95))
+
+            runStatistics = list(calcStatistic(data[i * segLen: \
+                                                    i * segLen + segLen], \
+                                               avg) for i in range(numSeg)  )
+
+            for i in range(numSeg):
+                start = i * segLen; end = start + segLen
+                Z, R, Rbar, sr, p, n, n1, n2 = calcStatistic(data[start:end],
+                                                             avg)
+                passP1 = True if Z >= p1 else False
+                passP5 = True if Z >= p5 else False
+
+                runsTestPass = passP1 or passP5
+
+                print("%5d, %5s, %8.3f, %5d, %8.3f, %8.3f, %5d, %5d, %5d, %5d" % \
+                      (i, runsTestPass, Z, R, Rbar, sr, p, n, n1, n2) )
+
+            Zbar = float(0.0)
+
+            for run in runStatistics:
+                Z, R, Rbar, sr, p, n, n1, n2 = run
+                Zbar += Z
+            Zbar /= len(runStatistics)
+
+            sZ = float(0.0)
+
+            for run in runStatistics:
+                Z, R, Rbar, sr, p, n, n1, n2 = run
+                sZ += (Z - Zbar) * (Z - Zbar)
+            sZ = math.sqrt(sZ / len(runStatistics))
+            print(len(runStatistics), Zbar, sZ)
+                
         except IOError as error:
             print("Error - file not found")
     else:
