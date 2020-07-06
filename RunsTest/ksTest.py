@@ -50,12 +50,14 @@ if __name__ == '__main__':
     outptFile = input("Enter output filename: ")
     sampleTyp = bool(input("Enter type of sampling " \
                            + "(0: without replacement; 1: w/ replacement): "))
+    print(sampleTyp)
     
     with open(inputFile, mode='r') as fin:
         inputData = fin.readlines()
     data = list(float(datIn) for datIn in inputData)
 
     with open(outptFile, mode='w') as fout:
+        runStats = list()
         for run in runs:
             tmp = run.split(',')
             segmentLen = int(tmp[0])
@@ -65,6 +67,7 @@ if __name__ == '__main__':
             means = list(); stdevs = list()
             runMeans = list(); runStDev = list()
             for k in range(10):
+                m = k * 100; n = m + 100
                 for j in range(100):
                     for i in range(int(len(data) / segmentLen)):
                         start = i * segmentLen; stop = (i + 1) * segmentLen
@@ -85,15 +88,32 @@ if __name__ == '__main__':
                     runStDev.append(stdev)
 
                 print("%4d, %4d," % (segmentLen, sampleSize),
-                      "%10.3f,"   % (statistics.fmean(runMeans)),
-                      "%10.3f,"   % (statistics.median(runMeans)),
-                      "%8.3f,"    % (statistics.fmean(runStDev)),
-                      "%8.3f"     % (statistics.median(runStDev)) )
+                      "%10.3f,"   % (statistics.fmean(runMeans[m:n])),
+                      "%10.3f,"   % (statistics.median(runMeans[m:n])),
+                      "%8.3f,"    % (statistics.fmean(runStDev[m:n])),
+                      "%8.3f"     % (statistics.median(runStDev[m:n])) )
 
                 print("%4d, %4d," % (segmentLen, sampleSize),
-                      "%10.3f,"   % (statistics.fmean(runMeans)),
-                      "%10.3f,"   % (statistics.median(runMeans)),
-                      "%8.3f,"    % (statistics.fmean(runStDev)),
-                      "%8.3f"     % (statistics.median(runStDev)), file=fout)
+                      "%10.3f,"   % (statistics.fmean(runMeans[m:n])),
+                      "%10.3f,"   % (statistics.median(runMeans[m:n])),
+                      "%8.3f,"    % (statistics.fmean(runStDev[m:n])),
+                      "%8.3f"     % (statistics.median(runStDev[m:n])), file=fout)
 
+            mean    = statistics.fmean(runMeans)
+            meanStd = statistics.stdev(runMeans)
+            stdMean = statistics.fmean(runStDev)
+            stdStd  = statistics.stdev(runStDev)
+            
+            print("%s" % ('='*80))
+
+            print("%4d,"      % (len(runMeans)),
+                  "%4d, %4d," % (segmentLen, sampleSize),
+                  "%10.3f,"   % (mean),
+                  "%8.3f,"    % (meanStd),
+                  "%8.3f,"    % (stdMean),
+                  "%8.3f"     % (stdStd)                 )
+
+            print("%s" % ('='*80))
+
+            runStats.append([fmean, meanStd, stdMean, stdStd])
     pass
