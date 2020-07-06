@@ -41,28 +41,59 @@ def criticalValue(index, gof=True, oneSided=True):
 
 if __name__ == '__main__':
 
-    fileName = input("Enter filename: ")
+    random.seed()
+
+    with open('bootstrap.dat', 'r') as fin:
+        runs = fin.readlines()
+
+    inputFile = input("Enter input filename:  ")
+    outptFile = input("Enter output filename: ")
+    sampleTyp = bool(input("Enter type of sampling " \
+                           + "(0: without replacement; 1: w/ replacement): "))
     
-    with open(fileName, mode='r') as fin:
+    with open(inputFile, mode='r') as fin:
         inputData = fin.readlines()
     data = list(float(datIn) for datIn in inputData)
 
-    segmentLen = int(input("Enter segment length: "))
-    sampleSize = int(input("Enter sample size:    "))
+    with open(outptFile, mode='w') as fout:
+        for run in runs:
+            tmp = run.split(',')
+            segmentLen = int(tmp[0])
+            sampleSize = int(tmp[1])
 
-    samples = list()
+            sample = list()
+            means = list(); stdevs = list()
+            runMeans = list(); runStDev = list()
+            for k in range(10):
+                for j in range(100):
+                    for i in range(int(len(data) / segmentLen)):
+                        start = i * segmentLen; stop = (i + 1) * segmentLen
+                        if sampleTyp:
+                            sample = random.choices(data[start:stop],
+                                                    k=sampleSize)
+                        else:
+                            sample = random.samples(data[start:stop],
+                                                    k=sampleSize)
+                        fmean = statistics.fmean(sample)
+                        stdev = statistics.stdev(sample)
+                        means.append(fmean)
+                        stdevs.append(stdev)
+                    
+                    fmean = statistics.fmean(means)
+                    runMeans.append(fmean)
+                    stdev = statistics.stdev(stdevs)
+                    runStDev.append(stdev)
 
-    for i in range(int(len(data) / segmentLen)):
-        start = i * segmentLen; stop = (i + 1) * segmentLen
-        
-        mean = statistics.harmonic_mean(random.sample(data[start:stop], sampleSize))
-        samples.append(mean)
-    mean = statistics.harmonic_mean(samples)
+                print("%4d, %4d," % (segmentLen, sampleSize),
+                      "%10.3f,"   % (statistics.fmean(runMeans)),
+                      "%10.3f,"   % (statistics.median(runMeans)),
+                      "%8.3f,"    % (statistics.fmean(runStDev)),
+                      "%8.3f"     % (statistics.median(runStDev)) )
 
-    print("%.2f" % mean, statistics.multimode(samples), statistics.multimode(data))
-
-    quant = [round(q, 3) for q in statistics.quantiles(data, n=100)]
-    print(quant)
-
+                print("%4d, %4d," % (segmentLen, sampleSize),
+                      "%10.3f,"   % (statistics.fmean(runMeans)),
+                      "%10.3f,"   % (statistics.median(runMeans)),
+                      "%8.3f,"    % (statistics.fmean(runStDev)),
+                      "%8.3f"     % (statistics.median(runStDev)), file=fout)
 
     pass
